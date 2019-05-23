@@ -59,8 +59,6 @@ resource "aws_rds_cluster_instance" "this" {
   db_parameter_group_name         = "${var.db_parameter_group_name}"
   preferred_maintenance_window    = "${var.preferred_maintenance_window}"
   apply_immediately               = "${var.apply_immediately}"
-  monitoring_role_arn             = "${join("", aws_iam_role.rds_enhanced_monitoring.*.arn)}"
-  monitoring_interval             = "${var.monitoring_interval}"
   auto_minor_version_upgrade      = "${var.auto_minor_version_upgrade}"
   promotion_tier                  = "${count.index + 1}"
   performance_insights_enabled    = "${var.performance_insights_enabled}"
@@ -86,20 +84,6 @@ data "aws_iam_policy_document" "monitoring_rds_assume_role" {
       identifiers = ["monitoring.rds.amazonaws.com"]
     }
   }
-}
-
-resource "aws_iam_role" "rds_enhanced_monitoring" {
-  count = "${var.monitoring_interval > 0 ? 1 : 0}"
-
-  name               = "rds-enhanced-monitoring-${var.name}"
-  assume_role_policy = "${data.aws_iam_policy_document.monitoring_rds_assume_role.json}"
-}
-
-resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
-  count = "${var.monitoring_interval > 0 ? 1 : 0}"
-
-  role       = "${aws_iam_role.rds_enhanced_monitoring.name}"
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
 resource "aws_appautoscaling_target" "read_replica_count" {
